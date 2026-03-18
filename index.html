@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DISCIPLINE — Daily Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;600&display=swap');
+
+  /* ── RESET & VARIABLES ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0a0a0c;
+    --surface:   #111114;
+    --card:      #18181d;
+    --border:    #2a2a32;
+    --amber:     #f5a623;
+    --amber-dim: #b87818;
+    --amber-glow:#f5a62340;
+    --red:       #e05252;
+    --green:     #4ecb71;
+    --text:      #e8e8f0;
+    --muted:     #5a5a70;
+    --font-disp: 'Bebas Neue', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND GRID ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: .35;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 700px; height: 700px;
+    background: radial-gradient(ellipse, var(--amber-glow) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── LAYOUT ── */
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 6rem;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .brand { line-height: 1; }
+
+  .brand-label {
+    font-family: var(--font-mono);
+    font-size: .65rem;
+    letter-spacing: .2em;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: .25rem;
+  }
+
+  .brand-title {
+    font-family: var(--font-disp);
+    font-size: clamp(3rem, 10vw, 5rem);
+    letter-spacing: .04em;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .header-date {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    color: var(--muted);
+    letter-spacing: .12em;
+    line-height: 1.8;
+  }
+
+  .header-date strong {
+    display: block;
+    font-size: 1.1rem;
+    color: var(--amber);
+    letter-spacing: .04em;
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .75rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--amber);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .4s ease;
+  }
+
+  .stat-card:hover::before { transform: scaleX(1); }
+  .stat-card:hover { border-color: var(--amber-dim); }
+
+  .stat-num {
+    font-family: var(--font-disp);
+    font-size: clamp(2.2rem, 7vw, 3.2rem);
+    color: var(--amber);
+    line-height: 1;
+    letter-spacing: .02em;
+  }
+
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: .6rem;
+    letter-spacing: .15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: .4rem;
+  }
+
+  /* ── PROGRESS SECTION ── */
+  .progress-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .progress-title {
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .progress-pct {
+    font-family: var(--font-disp);
+    font-size: 1.6rem;
+    color: var(--amber);
+    letter-spacing: .04em;
+  }
+
+  .progress-track {
+    height: 8px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--amber-dim), var(--amber));
+    box-shadow: 0 0 12px var(--amber-glow);
+    transition: width .6s cubic-bezier(.4, 0, .2, 1);
+    position: relative;
+  }
+
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 20px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.25));
+    border-radius: 99px;
+  }
+
+  /* ── TASKS SECTION ── */
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-heading-text {
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .section-heading-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── TASK ITEM ── */
+  .task-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: all .18s ease;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .task-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--amber-glow);
+    opacity: 0;
+    transition: opacity .3s;
+  }
+
+  .task-item:hover { border-color: var(--amber-dim); transform: translateX(3px); }
+  .task-item:active { transform: translateX(1px) scale(.99); }
+
+  .task-item.done {
+    border-color: var(--amber-dim);
+    background: #1a1a10;
+  }
+
+  .task-item.done::before { opacity: 1; }
+
+  .task-check {
+    width: 22px; height: 22px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+    position: relative;
+    z-index: 1;
+  }
+
+  .task-item.done .task-check {
+    background: var(--amber);
+    border-color: var(--amber);
+  }
+
+  .task-check svg {
+    opacity: 0;
+    transform: scale(0);
+    transition: all .2s cubic-bezier(.175, .885, .32, 1.275);
+  }
+
+  .task-item.done .task-check svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .task-body { flex: 1; position: relative; z-index: 1; }
+
+  .task-emoji { font-size: 1.15rem; margin-right: .4rem; }
+
+  .task-name {
+    font-size: .95rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    transition: color .2s;
+  }
+
+  .task-item.done .task-name { color: var(--amber); }
+
+  .task-desc {
+    font-size: .75rem;
+    color: var(--muted);
+    margin-top: .18rem;
+    font-family: var(--font-mono);
+  }
+
+  .task-delete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: .25rem;
+    border-radius: 6px;
+    opacity: 0;
+    transition: all .2s;
+    position: relative;
+    z-index: 1;
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .task-item:hover .task-delete { opacity: 1; }
+  .task-delete:hover { color: var(--red); background: rgba(224,82,82,.1); }
+
+  /* ── ADD TASK PANEL ── */
+  .add-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .add-panel-title {
+    font-family: var(--font-mono);
+    font-size: .65rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .add-row {
+    display: flex;
+    gap: .6rem;
+    flex-wrap: wrap;
+  }
+
+  .add-input {
+    flex: 1;
+    min-width: 140px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .7rem 1rem;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: .9rem;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .add-input:focus { border-color: var(--amber-dim); }
+  .add-input::placeholder { color: var(--muted); }
+
+  .emoji-input {
+    width: 58px;
+    text-align: center;
+    font-size: 1.2rem;
+    flex: none;
+  }
+
+  .btn {
+    background: var(--amber);
+    border: none;
+    border-radius: 8px;
+    padding: .7rem 1.4rem;
+    color: #000;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: .85rem;
+    letter-spacing: .05em;
+    cursor: pointer;
+    transition: all .18s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: #ffc147; transform: translateY(-1px); box-shadow: 0 4px 20px var(--amber-glow); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: .8rem;
+    letter-spacing: .04em;
+  }
+
+  .btn-ghost:hover { border-color: var(--amber-dim); color: var(--amber); background: var(--amber-glow); box-shadow: none; }
+
+  /* ── RESET / BOTTOM ACTIONS ── */
+  .actions-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-top: .5rem;
+  }
+
+  .day-status {
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    letter-spacing: .1em;
+    color: var(--muted);
+  }
+
+  .day-status span {
+    font-size: .85rem;
+    font-weight: 500;
+    letter-spacing: .04em;
+  }
+
+  .status-success { color: var(--green); }
+  .status-fail    { color: var(--red); }
+  .status-partial { color: var(--amber); }
+
+  /* ── STREAK FLAME ── */
+  .streak-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    background: linear-gradient(135deg, #3a1a00, #1a0d00);
+    border: 1px solid var(--amber-dim);
+    border-radius: 99px;
+    padding: .3rem .9rem .3rem .6rem;
+    margin-top: .5rem;
+  }
+
+  .streak-flame { font-size: 1rem; }
+
+  .streak-text {
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    color: var(--amber);
+    letter-spacing: .08em;
+  }
+
+  /* ── HISTORY SECTION ── */
+  .history-section {
+    margin-top: 2.5rem;
+  }
+
+  .history-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    margin-top: .75rem;
+  }
+
+  .history-dot {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    position: relative;
+    cursor: default;
+    transition: transform .15s;
+  }
+
+  .history-dot:hover { transform: scale(1.2); z-index: 1; }
+
+  .history-dot.success { background: var(--green); border-color: var(--green); opacity: .8; }
+  .history-dot.fail    { background: var(--red);   border-color: var(--red);   opacity: .6; }
+  .history-dot.partial { background: var(--amber); border-color: var(--amber-dim); opacity: .75; }
+  .history-dot.today   { box-shadow: 0 0 0 2px var(--amber); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(4rem);
+    background: var(--card);
+    border: 1px solid var(--amber-dim);
+    border-radius: 10px;
+    padding: .75rem 1.5rem;
+    font-family: var(--font-mono);
+    font-size: .78rem;
+    color: var(--amber);
+    letter-spacing: .06em;
+    opacity: 0;
+    transition: all .35s cubic-bezier(.4, 0, .2, 1);
+    z-index: 100;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 520px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+    .stat-card { padding: 1rem .6rem; }
+    .stat-num  { font-size: 2rem; }
+    .task-item { padding: .85rem 1rem; }
+    .add-row   { flex-direction: column; }
+    .emoji-input { width: 100%; }
+    .btn       { width: 100%; text-align: center; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse-amber {
+    0%, 100% { box-shadow: 0 0 0 0 var(--amber-glow); }
+    50%       { box-shadow: 0 0 0 6px transparent; }
+  }
+
+  .wrapper > * {
+    animation: fadeSlideIn .5s ease both;
+  }
+  .wrapper > *:nth-child(1) { animation-delay: .05s; }
+  .wrapper > *:nth-child(2) { animation-delay: .12s; }
+  .wrapper > *:nth-child(3) { animation-delay: .18s; }
+  .wrapper > *:nth-child(4) { animation-delay: .24s; }
+  .wrapper > *:nth-child(5) { animation-delay: .30s; }
+  .wrapper > *:nth-child(6) { animation-delay: .36s; }
+
+  .task-item { animation: fadeSlideIn .3s ease both; }
+
+  .done-pulse { animation: pulse-amber .4s ease; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-label">// daily ops</div>
+      <div class="brand-title">DISCIPLINE</div>
+      <div id="streakBadge" class="streak-badge" style="display:none">
+        <span class="streak-flame">🔥</span>
+        <span class="streak-text" id="streakBadgeText"></span>
+      </div>
+    </div>
+    <div class="header-date" id="headerDate"></div>
+  </header>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="statStreak">0</div>
+      <div class="stat-label">Jours consécutifs</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statDone">0</div>
+      <div class="stat-label">Tâches aujourd'hui</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">Total tâches</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-section">
+    <div class="progress-header">
+      <span class="progress-title">// progression du jour</span>
+      <span class="progress-pct" id="progressPct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- TASKS -->
+  <div>
+    <div class="section-heading">
+      <span class="section-heading-text">// missions du jour</span>
+      <div class="section-heading-line"></div>
+    </div>
+    <div class="tasks-list" id="tasksList"></div>
+
+    <div class="actions-row">
+      <div class="day-status" id="dayStatus"></div>
+      <button class="btn btn-ghost" onclick="resetDay()">↺ Réinitialiser le jour</button>
+    </div>
+  </div>
+
+  <!-- ADD TASK -->
+  <div class="add-panel">
+    <div class="add-panel-title">// ajouter une mission</div>
+    <div class="add-row">
+      <input class="add-input emoji-input" id="newEmoji" maxlength="2" placeholder="🎯" />
+      <input class="add-input" id="newName" placeholder="Nom de la mission…" />
+      <input class="add-input" id="newDesc" placeholder="Description courte (optionnel)" style="flex:1.5" />
+      <button class="btn" onclick="addTask()">+ Ajouter</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="history-section">
+    <div class="section-heading">
+      <span class="section-heading-text">// historique 30 jours</span>
+      <div class="section-heading-line"></div>
+    </div>
+    <div class="history-grid" id="historyGrid"></div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  STATE & PERSISTENCE
+// ═══════════════════════════════════════════════════════
+
+const KEY_TASKS   = 'disc_tasks';
+const KEY_HISTORY = 'disc_history';
+const KEY_LASTDAY = 'disc_lastday';
+
+const DEFAULT_TASKS = [
+  { id: 1, emoji: '💪', name: 'Sport',        desc: '30 min minimum',       done: false },
+  { id: 2, emoji: '📚', name: 'Lecture',      desc: '20 pages par jour',    done: false },
+  { id: 3, emoji: '💧', name: 'Hydratation',  desc: '2L d\'eau',            done: false },
+  { id: 4, emoji: '🧘', name: 'Méditation',   desc: '10 min de pleine conscience', done: false },
+  { id: 5, emoji: '🚫', name: 'No Scroll',    desc: 'Réseaux sociaux < 15 min', done: false },
+  { id: 6, emoji: '🛏️', name: 'Sommeil',      desc: 'Couché avant 23h',    done: false },
+];
+
+function load(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch { return fallback; }
+}
+function save(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+
+// ═══════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════
+
+let tasks   = load(KEY_TASKS,   DEFAULT_TASKS);
+let history = load(KEY_HISTORY, []);
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// Check if new day → archive yesterday
+function checkNewDay() {
+  const lastDay = localStorage.getItem(KEY_LASTDAY);
+  const today   = todayKey();
+  if (lastDay && lastDay !== today) {
+    archiveDay(lastDay);
+    tasks = tasks.map(t => ({ ...t, done: false }));
+    save(KEY_TASKS, tasks);
+  }
+  localStorage.setItem(KEY_LASTDAY, today);
+}
+
+function archiveDay(dateKey) {
+  const done  = tasks.filter(t => t.done).length;
+  const total = tasks.length;
+  const pct   = total > 0 ? done / total : 0;
+  const status = pct === 1 ? 'success' : pct >= .5 ? 'partial' : 'fail';
+  // Remove old entry for same key if exists
+  history = history.filter(h => h.date !== dateKey);
+  history.push({ date: dateKey, done, total, status });
+  // Keep last 60 days
+  history = history.slice(-60);
+  save(KEY_HISTORY, history);
+}
+
+// ═══════════════════════════════════════════════════════
+//  STREAK CALCULATION
+// ═══════════════════════════════════════════════════════
+
+function calcStreak() {
+  if (!history.length) return 0;
+  const sorted = [...history].sort((a, b) => b.date.localeCompare(a.date));
+  let streak = 0;
+  let prev = null;
+
+  for (const h of sorted) {
+    if (h.status !== 'success') break;
+    if (prev !== null) {
+      const diff = daysBetween(h.date, prev);
+      if (diff !== 1) break;
+    }
+    streak++;
+    prev = h.date;
+  }
+  return streak;
+}
+
+function daysBetween(a, b) {
+  // a is older, b is newer; returns b-a in days
+  return Math.round((new Date(b) - new Date(a)) / 86400000);
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════
+
+function render() {
+  renderHeader();
+  renderStats();
+  renderProgress();
+  renderTasks();
+  renderHistory();
+}
+
+function renderHeader() {
+  const d = new Date();
+  const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const months = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  document.getElementById('headerDate').innerHTML =
+    `<span>${days[d.getDay()]}</span><br>
+     <strong>${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}</strong><br>
+     <span>${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</span>`;
+}
+
+function renderStats() {
+  const done  = tasks.filter(t => t.done).length;
+  const total = tasks.length;
+  const streak = calcStreak();
+
+  document.getElementById('statStreak').textContent = streak;
+  document.getElementById('statDone').textContent   = done;
+  document.getElementById('statTotal').textContent  = total;
+
+  const badge = document.getElementById('streakBadge');
+  if (streak >= 2) {
+    badge.style.display = 'inline-flex';
+    document.getElementById('streakBadgeText').textContent = `${streak} jours de feu`;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderProgress() {
+  const done  = tasks.filter(t => t.done).length;
+  const total = tasks.length;
+  const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent  = pct + '%';
+}
+
+function renderTasks() {
+  const list = document.getElementById('tasksList');
+  list.innerHTML = '';
+  tasks.forEach((t, i) => {
+    const el = document.createElement('div');
+    el.className = 'task-item' + (t.done ? ' done' : '');
+    el.style.animationDelay = (i * 0.06) + 's';
+    el.innerHTML = `
+      <div class="task-check">
+        <svg width="13" height="10" viewBox="0 0 13 10" fill="none">
+          <path d="M1.5 5L5 8.5L11.5 1.5" stroke="#000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="task-body">
+        <div class="task-name"><span class="task-emoji">${t.emoji}</span>${t.name}</div>
+        ${t.desc ? `<div class="task-desc">${t.desc}</div>` : ''}
+      </div>
+      <button class="task-delete" onclick="deleteTask(${t.id}, event)" title="Supprimer">✕</button>
+    `;
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.task-delete')) return;
+      toggleTask(t.id);
+    });
+    list.appendChild(el);
+  });
+
+  // Day status
+  const done  = tasks.filter(t => t.done).length;
+  const total = tasks.length;
+  const statusEl = document.getElementById('dayStatus');
+
+  if (total === 0) {
+    statusEl.innerHTML = '';
+  } else if (done === total) {
+    statusEl.innerHTML = `<span class="status-success">✦ Journée parfaite ! ${done}/${total}</span>`;
+  } else if (done === 0) {
+    statusEl.innerHTML = `<span class="status-fail">○ Aucune tâche complétée</span>`;
+  } else {
+    statusEl.innerHTML = `<span class="status-partial">◑ ${done} / ${total} tâches</span>`;
+  }
+}
+
+function renderHistory() {
+  const grid = document.getElementById('historyGrid');
+  grid.innerHTML = '';
+  const today = todayKey();
+
+  // Build last 30 days array
+  const days = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    days.push(key);
+  }
+
+  const histMap = {};
+  history.forEach(h => histMap[h.date] = h);
+
+  days.forEach(key => {
+    const el = document.createElement('div');
+    el.className = 'history-dot';
+    const h = histMap[key];
+    if (h) el.classList.add(h.status);
+    if (key === today) el.classList.add('today');
+    el.title = key + (h ? ` — ${h.done}/${h.total}` : ' — à venir');
+    grid.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  ACTIONS
+// ═══════════════════════════════════════════════════════
+
+function toggleTask(id) {
+  tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+  save(KEY_TASKS, tasks);
+
+  const wasDone = tasks.find(t => t.id === id).done;
+  if (wasDone) {
+    const allDone = tasks.every(t => t.done);
+    if (allDone) showToast('🔥 Journée parfaite ! Continue comme ça !');
+    else showToast('✓ Mission accomplie');
+  }
+  render();
+}
+
+function addTask() {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { showToast('⚠ Entre un nom de mission'); return; }
+  const emoji = document.getElementById('newEmoji').value.trim() || '🎯';
+  const desc  = document.getElementById('newDesc').value.trim();
+
+  const newId = Date.now();
+  tasks.push({ id: newId, emoji, name, desc, done: false });
+  save(KEY_TASKS, tasks);
+
+  document.getElementById('newName').value  = '';
+  document.getElementById('newDesc').value  = '';
+  document.getElementById('newEmoji').value = '';
+
+  showToast('✦ Mission ajoutée');
+  render();
+}
+
+function deleteTask(id, e) {
+  e.stopPropagation();
+  tasks = tasks.filter(t => t.id !== id);
+  save(KEY_TASKS, tasks);
+  showToast('Mission supprimée');
+  render();
+}
+
+function resetDay() {
+  if (!confirm('Réinitialiser toutes les tâches du jour ?')) return;
+  tasks = tasks.map(t => ({ ...t, done: false }));
+  save(KEY_TASKS, tasks);
+  showToast('↺ Jour réinitialisé');
+  render();
+}
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+
+let toastTimer = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ═══════════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════
+
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter') && document.activeElement.id === 'newName') addTask();
+});
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+
+checkNewDay();
+render();
+
+// Live clock
+setInterval(() => renderHeader(), 30000);
+
+// Auto-archive at midnight
+setInterval(() => {
+  const today = todayKey();
+  const last  = localStorage.getItem(KEY_LASTDAY);
+  if (last && last !== today) {
+    checkNewDay();
+    render();
+  }
+}, 60000);
+</script>
+</body>
+</html>
